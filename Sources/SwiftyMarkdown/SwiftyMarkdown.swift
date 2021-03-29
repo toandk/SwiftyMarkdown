@@ -309,6 +309,9 @@ If that is not set, then the system default will be used.
 		if #available(iOS 13.0, tvOS 13.0, *) {
 			self.setFontColorForAllStyles(with: .label)
 		}
+        else {
+            self.setFontColorForAllStyles(with: UIColor.black)
+        }
 		#endif
 	}
 	
