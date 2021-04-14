@@ -250,11 +250,15 @@ public class SwiftyLineProcessor {
     }
     
     func processOrderListRegex(_ text: String) -> String {
+        var result: String = text + " " // to support `7. ` be replaced to `7.`
         let regex = try? NSRegularExpression(pattern: "^[0-9]+. ", options: .caseInsensitive)
-        let range = NSMakeRange(0, text.count)
-        let result = regex?.stringByReplacingMatches(in: text, options: [], range: range,
-                                                     withTemplate: "1. ")
-        return result ?? text
+        let range = NSMakeRange(0, result.count)
+        result = regex?.stringByReplacingMatches(in: result, options: [], range: range,
+                                                 withTemplate: "1. ") ?? result
+        if result != "1. " {
+            result = String(result.dropLast())
+        }
+        return result
     }
     
 }
