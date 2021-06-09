@@ -477,6 +477,8 @@ extension SwiftyMarkdown {
 			}
 			
 		default:
+            if line.line == "" { break }
+            // should not reset orderedListCount if got an empty line
 			self.orderedListCount = 0
 			self.orderedListIndentFirstOrderCount = 0
 			self.orderedListIndentSecondOrderCount = 0

@@ -219,7 +219,9 @@ public class SwiftyLineProcessor {
         
         self.perfomanceLog.start()
         
-        var lines = string.components(separatedBy: CharacterSet.newlines)
+        // when input rtf in macos web, this will use `\r\n` for new line
+        var lines = string.replacingOccurrences(of: "\r\n", with: "\n")
+            .components(separatedBy: CharacterSet.newlines)
         lines = self.processFrontMatter(lines)
         
         self.perfomanceLog.tag(with: "(Front matter completed)")
