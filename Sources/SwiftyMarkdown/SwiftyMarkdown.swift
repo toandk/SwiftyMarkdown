@@ -21,6 +21,7 @@ public enum CharacterStyle : CharacterStyling {
 	case none
 	case bold
 	case italic
+    case boldItalic
 	case code
 	case link
 	case image
@@ -201,8 +202,8 @@ If that is not set, then the system default will be used.
 		], styles: [1 : CharacterStyle.link], metadataLookup: false, definesBoundary: true),
 		CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.code], shouldCancelRemainingRules: true, balancedTags: true),
 		CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating), otherTags : [], styles: [2 : CharacterStyle.strikethrough], minTags:2 , maxTags:2),
-		CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold], minTags:1 , maxTags:2),
-		CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold], minTags:1 , maxTags:2)
+        CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold, 3 : CharacterStyle.boldItalic], minTags:1 , maxTags:2),
+        CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold, 3 : CharacterStyle.boldItalic], minTags:1 , maxTags:2)
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
@@ -573,6 +574,10 @@ extension SwiftyMarkdown {
 				attributes[.font] = self.font(for: line, characterOverride: .bold)
 				attributes[.foregroundColor] = self.bold.color
 			}
+            if (styles.contains(.italic) && styles.contains(.bold)) ||
+                styles.contains(.boldItalic) {
+                attributes[.font] = self.font(for: line, characterOverride: .boldItalic)
+            }
 			
             if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
                 attributes[.foregroundColor] = self.link.color

@@ -99,6 +99,11 @@ extension SwiftyMarkdown {
 				fontName = italic.fontName ?? fontName
 				fontSize = italic.fontSize
 				globalItalic = true
+            case .boldItalic:
+                fontName = bold.fontName ?? fontName
+                fontSize = bold.fontSize
+                globalBold = true
+                globalItalic = true
 			case .strikethrough:
 				fontName = strikethrough.fontName ?? fontName
 				fontSize = strikethrough.fontSize
