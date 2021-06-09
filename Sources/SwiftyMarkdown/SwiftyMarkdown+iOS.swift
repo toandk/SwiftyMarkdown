@@ -139,12 +139,16 @@ extension SwiftyMarkdown {
 			font = UIFont.preferredFont(forTextStyle: textStyle)
 		}
 		
-		if globalItalic, let italicDescriptor = font.fontDescriptor.withSymbolicTraits(.traitItalic) {
-			font = UIFont(descriptor: italicDescriptor, size: 0)
-		}
-		if globalBold, let boldDescriptor = font.fontDescriptor.withSymbolicTraits(.traitBold) {
-			font = UIFont(descriptor: boldDescriptor, size: 0)
-		}
+        var symTrails: UIFontDescriptor.SymbolicTraits = []
+        if globalItalic {
+            symTrails.insert(.traitItalic)
+        }
+        if globalBold {
+            symTrails.insert(.traitBold)
+        }
+        if let descriptor = font.fontDescriptor.withSymbolicTraits(symTrails) {
+            font = UIFont(descriptor: descriptor, size: 0)
+        }
 		
 		return font
 		
