@@ -129,6 +129,22 @@ class SwiftyScanner {
 		}
 		return isEscaped
 	}
+    
+    func isStartWord(range: ClosedRange<Int>?) -> Bool {
+        guard let range = range else { return false }
+        if range.lowerBound == 0 { return true }
+        let prevIndex = range.lowerBound - 1
+        let isStartWord = elements[prevIndex].character == " "
+        return isStartWord
+    }
+    
+    func isEndWord(range: ClosedRange<Int>?) -> Bool {
+        guard let range = range else { return false }
+        if range.upperBound >= elements.count - 1 { return true }
+        let nextIndex = range.upperBound + 1
+        let isEndWord = elements[nextIndex].character == " "
+        return isEndWord
+    }
 	
 	func range( for tag : String? ) -> ClosedRange<Int>? {
 
@@ -286,7 +302,7 @@ class SwiftyScanner {
 				}
 			}
 			
-			if self.rule.isRepeatingTag {
+            if rule.isRepeatingTag || rule.isRepeatingOnlyWord {
 				let difference = ( openRange.upperBound - openRange.lowerBound ) - (closeRange.upperBound - closeRange.lowerBound)
 				switch difference {
 				case 1...:
@@ -427,7 +443,7 @@ class SwiftyScanner {
 		}
 	}
 	
-	func scanRepeatingTags() {
+    func scanRepeatingTags(onlyWord: Bool) {
 				
 		var groupID = ""
 		let escapeCharacters = "" //self.rule.escapeCharacters.map( { String( $0 ) }).joined()
@@ -493,6 +509,10 @@ class SwiftyScanner {
 				}
 				
 				if let idx = tagGroups.firstIndex(where: { $0.groupID == groupID }) {
+                    if onlyWord && !isEndWord(range: openRange) {
+                        resetTag(in: openRange)
+                        continue
+                    }
 					if tagType == .either {
 						if tagGroups[idx].count == count {
 							self.tagGroups[idx].tagRanges.append(openRange)
@@ -513,7 +533,13 @@ class SwiftyScanner {
 						}
 						continue
 					}
-				}
+                } else {
+                    if onlyWord && !isStartWord(range: openRange) {
+                        resetTag(in: openRange)
+                        continue
+                    }
+                }
+                
 				var tagGroup = TagGroup(tagRanges: [openRange])
 				groupID = tagGroup.groupID
 				tagGroup.tagType = tagType
@@ -544,8 +570,8 @@ class SwiftyScanner {
 			os_log("RULE: %@", log: OSLog.swiftyScanner, type:.info , self.rule.description)
 		}
 		
-		if self.rule.isRepeatingTag {
-			self.scanRepeatingTags()
+        if rule.isRepeatingTag || rule.isRepeatingOnlyWord {
+            self.scanRepeatingTags(onlyWord: rule.isRepeatingOnlyWord)
 		} else {
 			self.scanNonRepeatingTags()
 		}

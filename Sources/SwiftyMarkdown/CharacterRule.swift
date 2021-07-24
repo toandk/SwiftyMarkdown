@@ -27,6 +27,7 @@ public enum CharacterRuleTagType {
 	case metadataOpen
 	case metadataClose
 	case repeating
+    case repeatingOnlyWord
 }
 
 
@@ -50,8 +51,11 @@ public struct CharacterRule : CustomStringConvertible {
 	public let maxTags : Int
 	public var metadataLookup : Bool = false
 	public var isRepeatingTag : Bool {
-		return self.primaryTag.type == .repeating
+        return primaryTag.type == .repeating
 	}
+    public var isRepeatingOnlyWord : Bool {
+        return primaryTag.type == .repeatingOnlyWord
+    }
 	public var definesBoundary = false
 	public var shouldCancelRemainingRules = false
 	public var balancedTags = false

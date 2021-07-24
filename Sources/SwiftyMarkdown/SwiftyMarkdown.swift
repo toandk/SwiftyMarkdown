@@ -203,7 +203,7 @@ If that is not set, then the system default will be used.
 		CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.code], shouldCancelRemainingRules: true, balancedTags: true),
 		CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating), otherTags : [], styles: [2 : CharacterStyle.strikethrough], minTags:2 , maxTags:2),
         CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold, 3 : CharacterStyle.boldItalic], minTags:1 , maxTags:2),
-        CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold, 3 : CharacterStyle.boldItalic], minTags:1 , maxTags:2)
+        CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeatingOnlyWord), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold, 3 : CharacterStyle.boldItalic], minTags:1 , maxTags:2)
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
