@@ -103,10 +103,12 @@ enum MarkdownLineStyle : LineStyling {
 #endif
 
 
-@objc public protocol LineProperties {
+public protocol LineProperties {
 	var alignment : NSTextAlignment { get set }
     var lineSpacing: CGFloat { get set }
-    var lineHeightMultiple: CGFloat { get set }
+    var lineHeightMultiple: CGFloat? { get set }
+    var minimumLineHeight: CGFloat? { get set }
+    var maximumLineHeight: CGFloat? { get set }
     var paragraphSpacing: CGFloat { get set }
 }
 
@@ -138,7 +140,9 @@ If that is not set, then the system default will be used.
 	public var fontStyle : FontStyle = .normal
 	public var alignment: NSTextAlignment = .left
     public var lineSpacing : CGFloat = 0.0
-    public var lineHeightMultiple: CGFloat = 1.0
+    public var lineHeightMultiple: CGFloat?
+    public var minimumLineHeight: CGFloat?
+    public var maximumLineHeight: CGFloat?
     public var paragraphSpacing : CGFloat = 0.0
 }
 
@@ -555,7 +559,15 @@ extension SwiftyMarkdown {
 			paragraphStyle.alignment = lineProperties.alignment
 		}
         paragraphStyle.lineSpacing = lineProperties.lineSpacing
-        paragraphStyle.lineHeightMultiple = lineProperties.lineHeightMultiple
+        if let lineHeightMultiple = lineProperties.lineHeightMultiple {
+            paragraphStyle.lineHeightMultiple = lineHeightMultiple
+        }
+        if let minimumLineHeight = lineProperties.minimumLineHeight {
+            paragraphStyle.minimumLineHeight = minimumLineHeight
+        }
+        if let maximumLineHeight = lineProperties.maximumLineHeight {
+            paragraphStyle.maximumLineHeight = maximumLineHeight
+        }
         paragraphStyle.paragraphSpacing = lineProperties.paragraphSpacing
         attributes[.paragraphStyle] = paragraphStyle
 		
