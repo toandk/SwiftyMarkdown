@@ -581,6 +581,11 @@ extension SwiftyMarkdown {
 			guard let styles = token.characterStyles as? [CharacterStyle] else {
 				continue
 			}
+            if styles.contains(.strikethrough) {
+                attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
+                attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue as AnyObject
+                attributes[.foregroundColor] = self.strikethrough.color
+            }
 			if styles.contains(.italic) {
 				attributes[.font] = self.font(for: line, characterOverride: .italic)
 				attributes[.foregroundColor] = self.italic.color
@@ -604,12 +609,6 @@ extension SwiftyMarkdown {
                     attributes[.underlineColor] = self.link.underlineColor
                 }
             }
-						
-			if styles.contains(.strikethrough) {
-				attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
-				attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue as AnyObject
-				attributes[.foregroundColor] = self.strikethrough.color
-			}
 			
 			#if !os(watchOS)
 			if let imgIdx = styles.firstIndex(of: .image), imgIdx < token.metadataStrings.count {
