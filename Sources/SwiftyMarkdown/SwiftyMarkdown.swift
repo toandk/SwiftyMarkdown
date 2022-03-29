@@ -176,6 +176,7 @@ If that is not set, then the system default will be used.
 		LineRule(token: "* ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
 		LineRule(token: "    ", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
+        LineRule(token: "```", type: MarkdownLineStyle.codeblock, removeFrom: .entireLine, shouldTrim: true, changeAppliesTo: .untilClose),
 		LineRule(token: ">",type : MarkdownLineStyle.blockquote, removeFrom: .leading),
 		LineRule(token: "###### ",type : MarkdownLineStyle.h6, removeFrom: .both),
 		LineRule(token: "##### ",type : MarkdownLineStyle.h5, removeFrom: .both),

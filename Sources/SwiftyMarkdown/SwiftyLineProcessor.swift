@@ -74,7 +74,7 @@ public class SwiftyLineProcessor {
     public var processEmptyStrings : LineStyling?
     public internal(set) var frontMatterAttributes : [String : String] = [:]
     
-    var closeToken : String? = nil
+    var processingMultilineRule: LineRule? = nil
     let defaultType : LineStyling
     
     let lineRules : [LineRule]
@@ -108,7 +108,11 @@ public class SwiftyLineProcessor {
         return output
     }
     
-    func processLineLevelAttributes( _ text : String ) -> SwiftyLine? {
+    private func hasEndingLineElement(_ element: LineRule, _ entireLines: [String]) -> Bool {
+        return entireLines.filter { $0 == element.token }.count > 0
+    }
+    
+    func processLineLevelAttributes(_ text : String, _ entireLines: [String]) -> SwiftyLine? {
         if text.isEmpty, let style = processEmptyStrings {
             return SwiftyLine(line: "", lineStyle: style)
         }
@@ -121,8 +125,8 @@ public class SwiftyLineProcessor {
             var output : String = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
             let unprocessed = output
             
-            if let hasToken = self.closeToken, unprocessed != hasToken {
-                return nil
+            if let hasRule = processingMultilineRule, unprocessed != hasRule.token {
+                return SwiftyLine(line: unprocessed, lineStyle: hasRule.type)
             }
             
             if element.token == "1. " {
@@ -153,11 +157,13 @@ public class SwiftyLineProcessor {
                 continue
             }
             if element.changeAppliesTo == .untilClose {
-                self.closeToken = (self.closeToken == nil) ? element.token : nil
-                return nil
+                if processingMultilineRule == nil && !hasEndingLineElement(element, entireLines) {
+                    // if dont has ending close, should not apply this rule
+                    continue
+                } else {
+                    processingMultilineRule = (processingMultilineRule == nil) ? element : nil
+                }
             }
-            
-            
             
             output = (element.shouldTrim) ? output.trimmingCharacters(in: .whitespaces) : output
             return SwiftyLine(line: output, lineStyle: element.type)
@@ -227,13 +233,14 @@ public class SwiftyLineProcessor {
         self.perfomanceLog.tag(with: "(Front matter completed)")
         
         
-        for  heading in lines {
+        for (index, heading) in lines.enumerated() {
             
             if processEmptyStrings == nil && heading.isEmpty {
                 continue
             }
             
-            guard let input = processLineLevelAttributes(String(heading)) else {
+            let entireLines: [String] = lines.enumerated().filter { $0.offset > index }.map { $0.element }
+            guard let input = processLineLevelAttributes(String(heading), entireLines) else {
                 continue
             }
             
