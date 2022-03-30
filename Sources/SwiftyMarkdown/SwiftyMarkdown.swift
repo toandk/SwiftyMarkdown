@@ -508,9 +508,6 @@ extension SwiftyMarkdown {
 			lineProperties = self.h6
 		case .codeblock:
 			lineProperties = body
-			let paragraphStyle = NSMutableParagraphStyle()
-			paragraphStyle.firstLineHeadIndent = 20.0
-			attributes[.paragraphStyle] = paragraphStyle
 		case .blockquote:
 			lineProperties = self.blockquotes
 			let paragraphStyle = NSMutableParagraphStyle()
