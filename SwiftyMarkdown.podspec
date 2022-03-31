@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 s.name             = "SwiftyMarkdown"
-s.version          = "1.2.8"
+s.version          = "1.3.1"
 s.summary          = "Converts Markdown to NSAttributed String"
 s.homepage         = "https://github.com/SimonFairbairn/SwiftyMarkdown"
 s.license          = 'MIT'
