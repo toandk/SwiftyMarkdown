@@ -83,34 +83,34 @@ extension SwiftyMarkdown {
 			fontName = body.fontName
 		}
 		
-		if let characterOverride = characterOverride {
-			switch characterOverride {
-			case .code:
-				fontName = code.fontName ?? fontName
-				fontSize = code.fontSize
-			case .link:
-				fontName = link.fontName ?? fontName
-				fontSize = link.fontSize
-			case .bold:
-				fontName = bold.fontName ?? fontName
-				fontSize = bold.fontSize
-				globalBold = true
-			case .italic:
-				fontName = italic.fontName ?? fontName
-				fontSize = italic.fontSize
-				globalItalic = true
+        if let characterOverride = characterOverride {
+            switch characterOverride {
+            case .code:
+                fontName = code.fontName ?? fontName
+                fontSize = code.fontSize
+            case .link:
+                fontName = link.fontName ?? fontName
+                fontSize = link.fontSize
+            case .bold:
+                fontName = fontName ?? bold.fontName
+                fontSize = fontSize ?? bold.fontSize
+                globalBold = true
+            case .italic:
+                fontName = fontName ?? italic.fontName
+                fontSize = fontSize ?? italic.fontSize
+                globalItalic = true
             case .boldItalic:
-                fontName = bold.fontName ?? fontName
-                fontSize = bold.fontSize
+                fontName = fontName ?? bold.fontName
+                fontSize = fontSize ?? bold.fontSize
                 globalBold = true
                 globalItalic = true
-			case .strikethrough:
-				fontName = strikethrough.fontName ?? fontName
-				fontSize = strikethrough.fontSize
-			default:
-				break
-			}
-		}
+            case .strikethrough:
+                fontName = fontName ?? strikethrough.fontName
+                fontSize = fontSize ?? strikethrough.fontSize
+            default:
+                break
+            }
+        }
 		
 		fontSize = fontSize == 0.0 ? nil : fontSize
 		var font : UIFont
