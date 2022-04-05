@@ -273,23 +273,23 @@ class SwiftyScanner {
 				os_log("Nothing between the tags", log: OSLog.swiftyScanner, type:.info , self.rule.description)
 			}
 		} else {
-			var remainingTags = min(openRange.upperBound - openRange.lowerBound, closeRange.upperBound - closeRange.lowerBound) + 1
-			while remainingTags > 0 {
-				if remainingTags >= self.rule.maxTags {
-					remainingTags -= self.rule.maxTags
-					if let style = self.rule.styles[ self.rule.maxTags ] {
-						if !styles.contains(where: { $0.isEqualTo(style)}) {
-							styles.append(style)
-						}
-					}
-				}
-				if let style = self.rule.styles[remainingTags] {
-					remainingTags -= remainingTags
-					if !styles.contains(where: { $0.isEqualTo(style)}) {
-						styles.append(style)
-					}
-				}
-			}
+            var remainingTags = min(openRange.upperBound - openRange.lowerBound, closeRange.upperBound - closeRange.lowerBound) + 1
+            while remainingTags >= self.rule.minTags {
+                if remainingTags >= self.rule.maxTags {
+                    remainingTags -= self.rule.maxTags
+                    if let style = self.rule.styles[ self.rule.maxTags ] {
+                        if !styles.contains(where: { $0.isEqualTo(style)}) {
+                            styles.append(style)
+                        }
+                    }
+                }
+                if let style = self.rule.styles[remainingTags] {
+                    remainingTags -= remainingTags
+                    if !styles.contains(where: { $0.isEqualTo(style)}) {
+                        styles.append(style)
+                    }
+                }
+            }
 			
 			for idx in (openRange.upperBound)...(closeRange.lowerBound) {
 				self.elements[idx].styles.append(contentsOf: styles)
@@ -470,10 +470,10 @@ class SwiftyScanner {
 					tagType = .open
 				}
 				
-				while let nextRange = self.range(for: self.rule.primaryTag.tag)  {
-					count += 1
-					openRange = openRange.lowerBound...nextRange.upperBound
-				}
+                while openRange.count < rule.limitConsecutiveTags, let nextRange = range(for: rule.primaryTag.tag) {
+                    count += 1
+                    openRange = openRange.lowerBound...nextRange.upperBound
+                }
 				
 				if self.rule.minTags > 1 {
 					if (openRange.upperBound - openRange.lowerBound) + 1 < self.rule.minTags {

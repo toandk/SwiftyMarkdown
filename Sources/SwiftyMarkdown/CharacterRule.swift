@@ -43,26 +43,31 @@ public struct CharacterRuleTag {
 
 public struct CharacterRule : CustomStringConvertible {
 	
-	public let primaryTag : CharacterRuleTag
-	public let tags : [CharacterRuleTag]
-	public let escapeCharacters : [Character]
-	public let styles : [Int : CharacterStyling]
-	public let minTags : Int
-	public let maxTags : Int
-	public var metadataLookup : Bool = false
-	public var isRepeatingTag : Bool {
+    public let primaryTag : CharacterRuleTag
+    public let tags : [CharacterRuleTag]
+    public let escapeCharacters : [Character]
+    public let styles : [Int : CharacterStyling]
+    public let minTags : Int
+    public let maxTags : Int
+    var limitConsecutiveTags: Int {
+        var result: Int = 0
+        for i in minTags...maxTags { result = result + i }
+        return result
+    }
+    public var metadataLookup : Bool = false
+    public var isRepeatingTag : Bool {
         return primaryTag.type == .repeating
-	}
+    }
     public var isRepeatingOnlyWord : Bool {
         return primaryTag.type == .repeatingOnlyWord
     }
-	public var definesBoundary = false
-	public var shouldCancelRemainingRules = false
-	public var balancedTags = false
-	
-	public var description: String {
-		return "Character Rule with Open tag: \(self.primaryTag.tag) and current styles : \(self.styles) "
-	}
+    public var definesBoundary = false
+    public var shouldCancelRemainingRules = false
+    public var balancedTags = false
+    
+    public var description: String {
+        return "Character Rule with Open tag: \(self.primaryTag.tag) and current styles : \(self.styles) "
+    }
 	
 	public func tag( for type : CharacterRuleTagType ) -> CharacterRuleTag? {
 		return self.tags.filter({ $0.type == type }).first ?? nil
