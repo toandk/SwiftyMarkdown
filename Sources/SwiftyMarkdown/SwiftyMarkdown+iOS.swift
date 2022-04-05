@@ -114,7 +114,11 @@ extension SwiftyMarkdown {
 		
 		fontSize = fontSize == 0.0 ? nil : fontSize
 		var font : UIFont
-		if let existentFontName = fontName {
+		if var existentFontName = fontName {
+            if usingReplaceFontRule {
+                existentFontName = applyReplaceFontRule(fontName: existentFontName, globalBold: globalBold,
+                                                        globalItalic: globalItalic)
+            }
 			font = UIFont.preferredFont(forTextStyle: textStyle)
 			let finalSize : CGFloat
 			if let existentFontSize = fontSize {
@@ -139,15 +143,9 @@ extension SwiftyMarkdown {
 			font = UIFont.preferredFont(forTextStyle: textStyle)
 		}
 		
-        var symTrails: UIFontDescriptor.SymbolicTraits = []
-        if globalItalic {
-            symTrails.insert(.traitItalic)
-        }
-        if globalBold {
-            symTrails.insert(.traitBold)
-        }
-        if let descriptor = font.fontDescriptor.withSymbolicTraits(symTrails) {
-            font = UIFont(descriptor: descriptor, size: 0)
+        if !usingReplaceFontRule,
+           let symtraiFont = applySymTrails(font: font, globalBold: globalBold, globalItalic: globalItalic) {
+            font = symtraiFont
         }
 		
 		return font
@@ -183,6 +181,36 @@ extension SwiftyMarkdown {
 			return link.color
 		}
 	}
-	
+    
+    private func applyReplaceFontRule(fontName: String, globalBold: Bool, globalItalic: Bool) -> String {
+        var result: String = fontName
+        if globalBold {
+            var components: [String] = result.components(separatedBy: "-")
+            let lastIndex: Int = components.count - 1
+            if lastIndex > 0 {
+                // example replace SFProText-Regular -> SFProText-Bold
+                components[lastIndex] = "Bold"
+            }
+            result = components.joined(separator: "-")
+        }
+        if globalItalic {
+            result.append(contentsOf: "Italic")
+        }
+        return result
+    }
+    
+    private func applySymTrails(font: UIFont, globalBold: Bool, globalItalic: Bool) -> UIFont? {
+        var symTrails: UIFontDescriptor.SymbolicTraits = []
+        if globalItalic {
+            symTrails.insert(.traitItalic)
+        }
+        if globalBold {
+            symTrails.insert(.traitBold)
+        }
+        if !symTrails.isEmpty, let descriptor = font.fontDescriptor.withSymbolicTraits(symTrails) {
+            return UIFont(descriptor: descriptor, size: 0)
+        }
+        return nil
+    }
 }
 #endif
