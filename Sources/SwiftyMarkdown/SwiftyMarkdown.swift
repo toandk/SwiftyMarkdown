@@ -529,6 +529,8 @@ extension SwiftyMarkdown {
 			var addition = interval
 			var indent = ""
 			switch line.lineStyle as! MarkdownLineStyle {
+            case .unorderedList, .orderedList:
+                indent = "  "
 			case .unorderedListIndentFirstOrder, .orderedListIndentFirstOrder:
 				addition = interval * 2
 				indent = "\t"
