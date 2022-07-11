@@ -549,7 +549,7 @@ extension SwiftyMarkdown {
 			paragraphStyle.headIndent = addition
 
 			attributes[.paragraphStyle] = paragraphStyle
-			finalTokens.insert(Token(type: .string, inputString: "\(indent)\(listItem)"), at: 0)
+			finalTokens.insert(Token(type: .string, inputString: "\(indent)\(listItem)  "), at: 0)
 			
 		case .yaml:
 			lineProperties = body
