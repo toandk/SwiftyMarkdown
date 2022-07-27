@@ -275,8 +275,8 @@ If that is not set, then the system default will be used.
     open var strikethrough = BasicStyles()
     
     public var bullet : String = "•"
-    public var firstBullet: String = "•"
-    public var secondBullet: String = "•"
+    public var firstBullet: String = "◦"
+    public var secondBullet: String = "▪︎"
     
     public var underlineLinks : Bool = false
     
@@ -323,11 +323,13 @@ If that is not set, then the system default will be used.
             let content = contentString.components(separatedBy: CharacterSet.newlines)
             
             var value = ""
-            for text in content {
+            for (index, text) in content.enumerated() {
+                let isLast = index == content.count - 1
+                let str = isLast ? "" : "\n"
                 if !text.isEmpty {
-                    value = value + text + "\n"
+                    value = value + text + str
                 } else {
-                    value = value + "\(SwiftyMarkdown.tokenBreakParagraph)." + "\n"
+                    value = value + "\(SwiftyMarkdown.tokenBreakParagraph)." + str
                 }
             }
             
@@ -452,7 +454,7 @@ If that is not set, then the system default will be used.
     
     - returns: An NSAttributedString with the styles applied
     */
-    open func attributedString(from markdownString : String? = nil, isIncludeParagraphStyle: Bool = false) -> NSAttributedString {
+    open func attributedString(from markdownString : String? = nil, isNonParaStyle: Bool = false) -> NSAttributedString {
         
         self.previouslyFoundTokens.removeAll()
         self.perfomanceLog.start()
@@ -493,10 +495,10 @@ If that is not set, then the system default will be used.
             self.previouslyFoundTokens.append(contentsOf: finalTokens)
             self.perfomanceLog.tag(with: "(tokenising complete for line \(idx)")
             
-            if !isIncludeParagraphStyle {
+            if !isNonParaStyle {
                 attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
             } else {
-                //
+//                attributedString.append(attributedNonParagraphStyleStringFor(tokens: finalTokens, in: line))
             }
         }
         
@@ -721,4 +723,169 @@ extension SwiftyMarkdown {
     
         return finalAttributedString
     }
+    
+//    func attributedNonParagraphStyleStringFor(tokens : [Token], in line : SwiftyLine ) -> NSAttributedString {
+//
+//        var finalTokens = tokens
+//        let finalAttributedString = NSMutableAttributedString()
+//        var attributes : [NSAttributedString.Key : AnyObject] = [:]
+//
+//        guard let markdownLineStyle = line.lineStyle as? MarkdownLineStyle else {
+//            preconditionFailure("The passed line style is not a valid Markdown Line Style")
+//        }
+//
+//        var listItem = self.bullet
+//        switch markdownLineStyle {
+//        case .orderedList:
+//            listItem = self.bullet
+//            self.orderedListCount += 1
+//            self.orderedListIndentFirstOrderCount = 0
+//            self.orderedListIndentSecondOrderCount = 0
+//            listItem = "\(self.orderedListCount)."
+//        case .orderedListIndentFirstOrder, .unorderedListIndentFirstOrder:
+//            listItem = self.firstBullet
+//            self.orderedListIndentFirstOrderCount += 1
+//            self.orderedListIndentSecondOrderCount = 0
+//            if markdownLineStyle == .orderedListIndentFirstOrder {
+//                listItem = "\(self.orderedListIndentFirstOrderCount)."
+//            }
+//
+//        case .orderedListIndentSecondOrder, .unorderedListIndentSecondOrder:
+//            listItem = self.secondBullet
+//            self.orderedListIndentSecondOrderCount += 1
+//            if markdownLineStyle == .orderedListIndentSecondOrder {
+//                listItem = "\(self.orderedListIndentSecondOrderCount)."
+//            }
+//
+//        default:
+//            if line.line == "" { break }
+//            // should not reset orderedListCount if got an empty line
+//            self.orderedListCount = 0
+//            self.orderedListIndentFirstOrderCount = 0
+//            self.orderedListIndentSecondOrderCount = 0
+//        }
+//
+//        let lineProperties : LineProperties
+//        switch markdownLineStyle {
+//        case .h1:
+//            lineProperties = self.h1
+//        case .h2:
+//            lineProperties = self.h2
+//        case .h3:
+//            lineProperties = self.h3
+//        case .h4:
+//            lineProperties = self.h4
+//        case .h5:
+//            lineProperties = self.h5
+//        case .h6:
+//            lineProperties = self.h6
+//        case .codeblock:
+//            lineProperties = self.code
+//        case .blockquote:
+//            lineProperties = self.blockquotes
+//        case .unorderedList, .unorderedListIndentFirstOrder, .unorderedListIndentSecondOrder, .orderedList, .orderedListIndentFirstOrder, .orderedListIndentSecondOrder:
+//
+//            let interval : CGFloat = self.list.tabWidth
+//            var addition = interval
+//            var indent = ""
+//            switch line.lineStyle as! MarkdownLineStyle {
+//            case .unorderedList, .orderedList:
+//                indent = "\t"
+//            case .unorderedListIndentFirstOrder, .orderedListIndentFirstOrder:
+//                addition = interval * 3
+//                indent = "\t\t"
+//            case .unorderedListIndentSecondOrder, .orderedListIndentSecondOrder:
+//                addition = interval * 4
+//                indent = "\t\t\t"
+//            default:
+//                break
+//            }
+//
+//            lineProperties = self.list
+//            finalTokens.insert(Token(type: .string, inputString: "\(indent)\(listItem)\t"), at: 0)
+//
+//        case .yaml:
+//            lineProperties = body
+//        case .previousH1:
+//            lineProperties = body
+//        case .previousH2:
+//            lineProperties = body
+//        case .body:
+//            lineProperties = body
+//        case .referencedLink:
+//            lineProperties = body
+//        }
+//
+//        for token in finalTokens {
+//            attributes[.font] = self.font(for: line)
+//            attributes[.link] = nil
+//            attributes[.strikethroughStyle] = nil
+//            attributes[.foregroundColor] = self.color(for: line)
+//            attributes[.underlineStyle] = nil
+//            guard let styles = token.characterStyles as? [CharacterStyle] else {
+//                continue
+//            }
+//            if styles.contains(.strikethrough) {
+//                attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
+//                attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue as AnyObject
+//            }
+//            if styles.contains(.italic) {
+//                attributes[.font] = self.font(for: line, characterOverride: .italic)
+//            }
+//            if styles.contains(.bold) {
+//                attributes[.font] = self.font(for: line, characterOverride: .bold)
+//            }
+//            if (styles.contains(.italic) && styles.contains(.bold)) ||
+//                styles.contains(.boldItalic) {
+//                attributes[.font] = self.font(for: line, characterOverride: .boldItalic)
+//            }
+//
+//            if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
+//                attributes[.foregroundColor] = self.link.color
+//                attributes[.font] = self.font(for: line, characterOverride: .link)
+//                attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
+//                if let url = URL(string: token.metadataStrings[linkIdx]),
+//                   let linkAttributeName = link.linkAttributeName {
+//                    let key = NSAttributedString.Key(rawValue: linkAttributeName)
+//                    attributes[key] = url as AnyObject
+//                }
+//
+//                if underlineLinks {
+//                    attributes[.underlineStyle] = self.link.underlineStyle.rawValue as AnyObject
+//                    attributes[.underlineColor] = self.link.underlineColor
+//                }
+//            }
+//
+//            #if !os(watchOS)
+//            if let imgIdx = styles.firstIndex(of: .image), imgIdx < token.metadataStrings.count {
+//                if !self.applyAttachments {
+//                    continue
+//                }
+//                #if !os(macOS)
+//                let image1Attachment = NSTextAttachment()
+//                image1Attachment.image = UIImage(named: token.metadataStrings[imgIdx])
+//                let str = NSAttributedString(attachment: image1Attachment)
+//                finalAttributedString.append(str)
+//                #elseif !os(watchOS)
+//                let image1Attachment = NSTextAttachment()
+//                image1Attachment.image = NSImage(named: token.metadataStrings[imgIdx])
+//                let str = NSAttributedString(attachment: image1Attachment)
+//                finalAttributedString.append(str)
+//                #endif
+//                continue
+//            }
+//            #endif
+//
+//            if styles.contains(.code) {
+//                attributes[.foregroundColor] = self.code.color
+//                attributes[.font] = self.font(for: line, characterOverride: .code)
+//            } else {
+//                // Switch back to previous font
+//            }
+//            let str = NSAttributedString(string: token.outputString, attributes: attributes)
+//            finalAttributedString.append(str)
+//        }
+//
+//        return finalAttributedString
+//    }
 }
