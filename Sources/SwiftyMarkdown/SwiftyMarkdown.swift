@@ -57,6 +57,7 @@ enum MarkdownLineStyle : LineStyling {
     case previousH1
     case previousH2
     case body
+    case breakParagraph
     case blockquote
     case codeblock
     case unorderedList
@@ -167,6 +168,8 @@ If that is not set, then the system default will be used.
         FrontMatterRule(openTag: "---", closeTag: "---", keyValueSeparator: ":")
     ]
     
+    static public let tokenBreakParagraph = "#-##-#*#-#*## "
+    
     static public var lineRules = [
         LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
         LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
@@ -195,6 +198,7 @@ If that is not set, then the system default will be used.
         LineRule(token: "##  ",type : MarkdownLineStyle.h2, removeFrom: .both),
         LineRule(token: "# ",type : MarkdownLineStyle.h1, removeFrom: .both),
         LineRule(token: "#  ",type : MarkdownLineStyle.h1, removeFrom: .both),
+        LineRule(token: tokenBreakParagraph, type : MarkdownLineStyle.breakParagraph, removeFrom: .leading)
     ]
     
     static public var characterRules = [
@@ -247,6 +251,8 @@ If that is not set, then the system default will be used.
     
     /// The default body styles. These are the base styles and will be used for e.g. headers if no other styles override them.
     open var body = LineStyles()
+    
+    open var breakParagraph = LineStyles()
     
     /// The styles to apply to any blockquotes found in the Markdown
     open var blockquotes = LineStyles()
@@ -302,8 +308,32 @@ If that is not set, then the system default will be used.
     
     - returns: An initialized SwiftyMarkdown object
     */
-    public init(string : String ) {
+    public init(string : String, onlyANewLine: Bool = false) {
         self.string = string
+        
+        if onlyANewLine {
+            var contentString = string.replacingOccurrences(of: "\r\n", with: "\n")
+            
+            var temp = contentString
+            repeat {
+                temp = contentString
+                contentString = contentString.replacingOccurrences(of: "\n\n\n", with: "\n\n")
+            } while temp != contentString
+            
+            let content = contentString.components(separatedBy: CharacterSet.newlines)
+            
+            var value = ""
+            for text in content {
+                if !text.isEmpty {
+                    value = value + text + "\n"
+                } else {
+                    value = value + "\(SwiftyMarkdown.tokenBreakParagraph)." + "\n"
+                }
+            }
+            
+            self.string = value
+        }
+        
         super.init()
         self.setup()
     }
@@ -422,7 +452,7 @@ If that is not set, then the system default will be used.
     
     - returns: An NSAttributedString with the styles applied
     */
-    open func attributedString(from markdownString : String? = nil) -> NSAttributedString {
+    open func attributedString(from markdownString : String? = nil, isIncludeParagraphStyle: Bool = false) -> NSAttributedString {
         
         self.previouslyFoundTokens.removeAll()
         self.perfomanceLog.start()
@@ -463,8 +493,11 @@ If that is not set, then the system default will be used.
             self.previouslyFoundTokens.append(contentsOf: finalTokens)
             self.perfomanceLog.tag(with: "(tokenising complete for line \(idx)")
             
-            attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
-            
+            if !isIncludeParagraphStyle {
+                attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
+            } else {
+                //
+            }
         }
         
         self.perfomanceLog.end()
@@ -476,7 +509,7 @@ If that is not set, then the system default will be used.
 
 extension SwiftyMarkdown {
     
-    func attributedStringFor( tokens : [Token], in line : SwiftyLine ) -> NSAttributedString {
+    func attributedStringFor(tokens : [Token], in line : SwiftyLine ) -> NSAttributedString {
         
         var finalTokens = tokens
         let finalAttributedString = NSMutableAttributedString()
@@ -548,9 +581,18 @@ extension SwiftyMarkdown {
             let interval : CGFloat = self.list.tabWidth
             var addition = interval
             var indent = ""
+            
+            var spacing = self.list.paragraphSpacing
             switch line.lineStyle as! MarkdownLineStyle {
-            case .unorderedList, .orderedList:
+            case .unorderedList:
                 indent = "\t"
+                addition = interval * 2
+            case  .orderedList:
+                indent = "\t"
+                addition = interval * 2
+                if self.orderedListCount == 1 {
+                    spacing = spacing + 12.0
+                }
             case .unorderedListIndentFirstOrder, .orderedListIndentFirstOrder:
                 addition = interval * 3
                 indent = "\t\t"
@@ -570,6 +612,7 @@ extension SwiftyMarkdown {
                 NSTextTab(textAlignment: .left, location: interval, options: [:])]
             paragraphStyle.defaultTabInterval = interval
             paragraphStyle.headIndent = addition
+            paragraphStyle.paragraphSpacing = spacing
 
             attributes[.paragraphStyle] = paragraphStyle
             finalTokens.insert(Token(type: .string, inputString: "\(indent)\(listItem)\t"), at: 0)
@@ -584,6 +627,8 @@ extension SwiftyMarkdown {
             lineProperties = body
         case .referencedLink:
             lineProperties = body
+        case .breakParagraph:
+            lineProperties = breakParagraph
         }
         
         let paragraphStyle = attributes[.paragraphStyle] as? NSMutableParagraphStyle ?? NSMutableParagraphStyle()
