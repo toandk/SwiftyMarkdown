@@ -122,6 +122,7 @@ public class SwiftyLineProcessor {
             guard element.token.count > 0 else {
                 continue
             }
+            
             var output : String = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
             let unprocessed = output
             
@@ -129,12 +130,11 @@ public class SwiftyLineProcessor {
                 return SwiftyLine(line: unprocessed, lineStyle: hasRule.type)
             }
             
-            if element.token == "1. " {
-                // replace all text format "2. ", "3. ", ..etc with format "1. "
+            if element.token == "1. " || element.token == "    1. " || element.token == "        1. " {
                 output = processOrderListRegex(output)
             }
             
-            if !text.contains(element.token) && element.token != "1. " {
+            if !output.contains(element.token) {
                 continue
             }
             
@@ -167,7 +167,6 @@ public class SwiftyLineProcessor {
             
             output = (element.shouldTrim) ? output.trimmingCharacters(in: .whitespaces) : output
             return SwiftyLine(line: output, lineStyle: element.type)
-            
         }
         
         for element in previousLines {
@@ -192,6 +191,7 @@ public class SwiftyLineProcessor {
                 break
             }
         }
+        
         guard let existentRules = rulesToApply else {
             return strings
         }
@@ -216,12 +216,12 @@ public class SwiftyLineProcessor {
         while outputString.first?.isEmpty ?? false {
             outputString.removeFirst()
         }
+        
         return outputString
     }
     
     public func process( _ string : String ) -> [SwiftyLine] {
         var foundAttributes : [SwiftyLine] = []
-        
         
         self.perfomanceLog.start()
         
@@ -231,7 +231,6 @@ public class SwiftyLineProcessor {
         lines = self.processFrontMatter(lines)
         
         self.perfomanceLog.tag(with: "(Front matter completed)")
-        
         
         for (index, heading) in lines.enumerated() {
             
@@ -259,11 +258,22 @@ public class SwiftyLineProcessor {
     }
     
     func processOrderListRegex(_ text: String) -> String {
-        var result: String = text + " " // to support `7. ` be replaced to `7.`
-        let regex = try? NSRegularExpression(pattern: "^[0-9]+\\. ", options: .caseInsensitive)
+        var result: String = text.trimmingCharacters(in: .whitespaces) + " " // to support `7. ` be replaced to `7.`
+        
+        let pattern = "^[0-9]+\\. "
+        
+        let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
         let range = NSMakeRange(0, result.count)
+        
         result = regex?.stringByReplacingMatches(in: result, options: [], range: range,
                                                  withTemplate: "1. ") ?? result
+        
+        if text.contains(SwiftyMarkdown.eightSpace) {
+            result = SwiftyMarkdown.eightSpace + result
+        } else if text.contains(SwiftyMarkdown.fourSpace) {
+            result = SwiftyMarkdown.fourSpace + result
+        }
+        
         if result != "1. " {
             result = String(result.dropLast())
         }
@@ -271,5 +281,3 @@ public class SwiftyLineProcessor {
     }
     
 }
-
-

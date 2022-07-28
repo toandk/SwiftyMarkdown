@@ -169,6 +169,12 @@ If that is not set, then the system default will be used.
     ]
     
     static public let tokenBreakParagraph = "#-##-#*#-#*## "
+    static public let fourSpace = "    "
+    static public let eightSpace = "        "
+    
+    static public let firstIndexOrderList = ["a", "b", "c", "d", "e", "f", "g", "h" ,"i" ,"k" ,"l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"] // 25
+    
+    static public let secondIndexOrderList = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii", "xiii", "xiv", "xv"] // 15
     
     static public var lineRules = [
         LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
@@ -182,12 +188,12 @@ If that is not set, then the system default will be used.
         LineRule(token: "\t* ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "        * ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "    * ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
+        LineRule(token: "* ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
         LineRule(token: "\t\t1. ", type: MarkdownLineStyle.orderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "\t1. ", type: MarkdownLineStyle.orderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "        1. ", type: MarkdownLineStyle.orderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "    1. ", type: MarkdownLineStyle.orderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "1. ",type : MarkdownLineStyle.orderedList, removeFrom: .leading),
-        LineRule(token: "* ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
         LineRule(token: "```", type: MarkdownLineStyle.codeblock, removeFrom: .entireLine, shouldTrim: true, changeAppliesTo: .untilClose),
         LineRule(token: ">",type : MarkdownLineStyle.blockquote, removeFrom: .leading),
         LineRule(token: "###### ",type : MarkdownLineStyle.h6, removeFrom: .both),
@@ -532,14 +538,20 @@ extension SwiftyMarkdown {
             self.orderedListIndentFirstOrderCount += 1
             self.orderedListIndentSecondOrderCount = 0
             if markdownLineStyle == .orderedListIndentFirstOrder {
-                listItem = "\(self.orderedListIndentFirstOrderCount)."
+                let count = SwiftyMarkdown.firstIndexOrderList.count
+                let temp = self.orderedListIndentFirstOrderCount % count
+                let value = temp == 0 ? SwiftyMarkdown.firstIndexOrderList[count - 1] : SwiftyMarkdown.firstIndexOrderList[temp - 1]
+                listItem = "\(value)."
             }
             
         case .orderedListIndentSecondOrder, .unorderedListIndentSecondOrder:
             listItem = self.secondBullet
             self.orderedListIndentSecondOrderCount += 1
             if markdownLineStyle == .orderedListIndentSecondOrder {
-                listItem = "\(self.orderedListIndentSecondOrderCount)."
+                let count = SwiftyMarkdown.secondIndexOrderList.count
+                let temp = self.orderedListIndentSecondOrderCount % count
+                let value = temp == 0 ? SwiftyMarkdown.secondIndexOrderList[count - 1] : SwiftyMarkdown.secondIndexOrderList[temp - 1]
+                listItem = "\(value)."
             }
             
         default:
