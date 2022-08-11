@@ -239,7 +239,18 @@ public class SwiftyLineProcessor {
             }
             
             let entireLines: [String] = lines.enumerated().filter { $0.offset > index }.map { $0.element }
-            guard let input = processLineLevelAttributes(String(heading), entireLines) else {
+            
+            var tempHeading = heading
+            if index == lines.count - 1, tempHeading.last == "-" {
+                let indexLineBefore = index - 1
+                if indexLineBefore >= 0 {
+                    let lineBefore = lines[indexLineBefore]
+                    if lineBefore.starts(with: "- ") || lineBefore.starts(with: "    - ") || lineBefore.starts(with: "        - ") {
+                        tempHeading = tempHeading + " "
+                    }
+                }
+            }
+            guard let input = processLineLevelAttributes(String(tempHeading), entireLines) else {
                 continue
             }
             
