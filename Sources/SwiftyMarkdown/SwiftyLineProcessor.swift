@@ -112,7 +112,7 @@ public class SwiftyLineProcessor {
         return entireLines.filter { $0 == element.token }.count > 0
     }
     
-    func processLineLevelAttributes(_ text : String, _ entireLines: [String]) -> SwiftyLine? {
+    func processLineLevelAttributes(_ text : String, _ entireLines: [String], _ textBefore: String) -> SwiftyLine? {
         if text.isEmpty, let style = processEmptyStrings {
             return SwiftyLine(line: "", lineStyle: style)
         }
@@ -130,8 +130,18 @@ public class SwiftyLineProcessor {
                 return SwiftyLine(line: unprocessed, lineStyle: hasRule.type)
             }
             
-            if element.token == "1. " || element.token == "    1. " || element.token == "        1. " {
+            if element.token == NumberingList.level1.rawValue || element.token == NumberingList.level2.rawValue || element.token == NumberingList.level3.rawValue {
                 output = processOrderListRegex(output)
+                let lineBefore = processOrderListRegex(textBefore)
+                if output.starts(with: NumberingList.level2.rawValue) {
+                    if !lineBefore.trimmingCharacters(in: .whitespaces).starts(with: NumberingList.level1.rawValue) {
+                        output = output.trimmingCharacters(in: .whitespaces)
+                    }
+                } else if output.starts(with: NumberingList.level3.rawValue) {
+                    if !lineBefore.trimmingCharacters(in: .whitespaces).starts(with: NumberingList.level1.rawValue) {
+                        output = output.trimmingCharacters(in: .whitespaces)
+                    }
+                }
             }
             
             if !output.contains(element.token) {
@@ -245,12 +255,19 @@ public class SwiftyLineProcessor {
                 let indexLineBefore = index - 1
                 if indexLineBefore >= 0 {
                     let lineBefore = lines[indexLineBefore]
-                    if lineBefore.starts(with: "- ") || lineBefore.starts(with: "    - ") || lineBefore.starts(with: "        - ") {
+                    if lineBefore.starts(with: BulletList.level1.rawValue) || lineBefore.starts(with: BulletList.level2.rawValue) || lineBefore.starts(with: BulletList.level3.rawValue) {
                         tempHeading = tempHeading + " "
                     }
                 }
             }
-            guard let input = processLineLevelAttributes(String(tempHeading), entireLines) else {
+            
+            var lineTextBefore = ""
+            let indexLineBefore = index - 1
+            if indexLineBefore >= 0 {
+                lineTextBefore = lines[indexLineBefore]
+            }
+            
+            guard let input = processLineLevelAttributes(String(tempHeading), entireLines, lineTextBefore) else {
                 continue
             }
             

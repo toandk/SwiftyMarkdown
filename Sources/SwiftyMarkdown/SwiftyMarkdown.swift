@@ -161,6 +161,18 @@ If that is not set, then the system default will be used.
     public lazy var linkAttributeName: String? = nil
 }
 
+enum NumberingList: String {
+    case level1 = "1. "
+    case level2 = "    1. "
+    case level3 = "        1. "
+}
+
+enum BulletList: String {
+    case level1 = "- "
+    case level2 = "    - "
+    case level3 = "        - "
+}
+
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
 @objc open class SwiftyMarkdown: NSObject {
     
@@ -181,9 +193,9 @@ If that is not set, then the system default will be used.
         LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
         LineRule(token: "\t\t- ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "\t- ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
-        LineRule(token: "        - ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
-        LineRule(token: "    - ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
-        LineRule(token: "- ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading, shouldTrim: false),
+        LineRule(token: BulletList.level3.rawValue, type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
+        LineRule(token: BulletList.level2.rawValue, type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
+        LineRule(token: BulletList.level1.rawValue,type : MarkdownLineStyle.unorderedList, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "\t\t* ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "\t* ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "        * ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
@@ -191,9 +203,9 @@ If that is not set, then the system default will be used.
         LineRule(token: "* ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
         LineRule(token: "\t\t1. ", type: MarkdownLineStyle.orderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
         LineRule(token: "\t1. ", type: MarkdownLineStyle.orderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
-        LineRule(token: "        1. ", type: MarkdownLineStyle.orderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
-        LineRule(token: "    1. ", type: MarkdownLineStyle.orderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
-        LineRule(token: "1. ",type : MarkdownLineStyle.orderedList, removeFrom: .leading),
+        LineRule(token: NumberingList.level3.rawValue, type: MarkdownLineStyle.orderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
+        LineRule(token: NumberingList.level2.rawValue, type: MarkdownLineStyle.orderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
+        LineRule(token: NumberingList.level1.rawValue,type : MarkdownLineStyle.orderedList, removeFrom: .leading),
         LineRule(token: "```", type: MarkdownLineStyle.codeblock, removeFrom: .entireLine, shouldTrim: true, changeAppliesTo: .untilClose),
         LineRule(token: ">",type : MarkdownLineStyle.blockquote, removeFrom: .leading),
         LineRule(token: "###### ",type : MarkdownLineStyle.h6, removeFrom: .both),
