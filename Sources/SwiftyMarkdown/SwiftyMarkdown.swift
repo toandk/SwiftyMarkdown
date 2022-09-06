@@ -527,6 +527,73 @@ enum BulletList: String {
         return attributedString
     }
     
+    // title is h1, h2 tag at first line - content is next line
+    open func detectTitleAndContent(from markdownString: String? = nil) -> (NSAttributedString, NSAttributedString) {
+        let titleAttributedString = NSMutableAttributedString(string: "")
+        let contentAttributedString = NSMutableAttributedString(string: "")
+        
+        if let markdownString = markdownString {
+            self.string = markdownString
+        }
+        
+        self.lineProcessor.processEmptyStrings = MarkdownLineStyle.body
+        let foundAttributes : [SwiftyLine] = lineProcessor.process(self.string)
+        
+        let references : [SwiftyLine] = foundAttributes.filter({ $0.line.starts(with: "[") && $0.line.contains("]:") })
+        let referencesRemoved : [SwiftyLine] = foundAttributes.filter({ !($0.line.starts(with: "[") && $0.line.contains("]:") ) })
+        var keyValuePairs : [String : String] = [:]
+        for line in references {
+            let strings = line.line.components(separatedBy: "]:")
+            guard strings.count >= 2 else {
+                continue
+            }
+            var key : String = strings[0]
+            if !key.isEmpty {
+                let newstart = key.index(key.startIndex, offsetBy: 1)
+                let range : Range<String.Index> = newstart..<key.endIndex
+                key = String(key[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            keyValuePairs[key] = strings[1].trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        self.tokeniser.metadataLookup = keyValuePairs
+        
+        guard !referencesRemoved.isEmpty else {
+            return (titleAttributedString, contentAttributedString)
+        }
+        
+        let firstLine = referencesRemoved[0]
+        var isHasH1OrH2Tag = false
+        
+        if let markdownLineStyle = firstLine.lineStyle as? MarkdownLineStyle {
+            let tokens = self.tokeniser.process(firstLine.line)
+            
+            switch markdownLineStyle {
+            case .h1, .h2:
+                titleAttributedString.append(attributedStringFor(tokens: tokens, in: firstLine))
+                isHasH1OrH2Tag = true
+            default:
+                break
+            }
+        }
+        
+        for (idx, line) in referencesRemoved.enumerated() {
+            if idx == 0 && isHasH1OrH2Tag {
+                continue
+            }
+            
+            let temp = isHasH1OrH2Tag ? 1 : 0
+            if idx > temp {
+                contentAttributedString.append(NSAttributedString(string: "\n"))
+            }
+            let finalTokens = self.tokeniser.process(line.line)
+            self.previouslyFoundTokens.append(contentsOf: finalTokens)
+            
+            contentAttributedString.append(attributedStringFor(tokens: finalTokens, in: line))
+        }
+        
+        return (titleAttributedString, contentAttributedString)
+    }
 }
 
 extension SwiftyMarkdown {
