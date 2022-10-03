@@ -475,7 +475,6 @@ enum BulletList: String {
     - returns: An NSAttributedString with the styles applied
     */
     open func attributedString(from markdownString : String? = nil,
-                               isIncludeParagraphStyle: Bool = false,
                                isNonBulletStyle: Bool = false
     ) -> NSAttributedString {
         
@@ -518,14 +517,10 @@ enum BulletList: String {
             self.previouslyFoundTokens.append(contentsOf: finalTokens)
             self.perfomanceLog.tag(with: "(tokenising complete for line \(idx)")
             
-            if !isIncludeParagraphStyle {
-                if !isNonBulletStyle {
-                    attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
-                } else {
-                    attributedString.append(attributedStringForNonBullet(tokens: finalTokens, in: line))
-                }
+            if !isNonBulletStyle {
+                attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
             } else {
-                attributedString.append(attributedStringNonPragraphStyleFor(tokens: finalTokens, in: line))
+                attributedString.append(attributedStringForNonBullet(tokens: finalTokens, in: line))
             }
         }
         
@@ -535,6 +530,7 @@ enum BulletList: String {
     }
     
     // title is h1, h2 tag at first line - content is next line
+    // title is h1 at first line - h2 is content if second line is h2
     open func detectTitleAndContent(from markdownString: String? = nil) -> (NSAttributedString, NSAttributedString) {
         let titleAttributedString = NSMutableAttributedString(string: "")
         let contentAttributedString = NSMutableAttributedString(string: "")
@@ -572,13 +568,36 @@ enum BulletList: String {
         let firstLine = referencesRemoved[0]
         var isHasH1OrH2Tag = false
         
+        var firstLineIsH1 = false
+        
+        var secondLine: SwiftyLine? = nil
+        if referencesRemoved.count >= 2 {
+            secondLine = referencesRemoved[1]
+        }
+        
         if let markdownLineStyle = firstLine.lineStyle as? MarkdownLineStyle {
             let tokens = self.tokeniser.process(firstLine.line)
             
             switch markdownLineStyle {
-            case .h1, .h2:
+            case .h1:
                 titleAttributedString.append(attributedStringForNonBullet(tokens: tokens, in: firstLine))
                 isHasH1OrH2Tag = true
+                firstLineIsH1 = true
+            case .h2:
+                titleAttributedString.append(attributedStringForNonBullet(tokens: tokens, in: firstLine))
+                isHasH1OrH2Tag = true
+            default:
+                break
+            }
+        }
+        
+        if let secondLine = secondLine, let secondLineStyle = secondLine.lineStyle as? MarkdownLineStyle, firstLineIsH1 {
+            let tokens = self.tokeniser.process(secondLine.line)
+            
+            switch secondLineStyle {
+            case .h2:
+                contentAttributedString.append(attributedStringForNonBullet(tokens: tokens, in: firstLine))
+                return (titleAttributedString, contentAttributedString)
             default:
                 break
             }
@@ -840,40 +859,12 @@ extension SwiftyMarkdown {
             if line.line == "" { break }
         }
 
-        let lineProperties : LineProperties
         switch markdownLineStyle {
-        case .h1:
-            lineProperties = self.h1
-        case .h2:
-            lineProperties = self.h2
-        case .h3:
-            lineProperties = self.h3
-        case .h4:
-            lineProperties = self.h4
-        case .h5:
-            lineProperties = self.h5
-        case .h6:
-            lineProperties = self.h6
-        case .codeblock:
-            lineProperties = self.code
-        case .blockquote:
-            lineProperties = self.blockquotes
-        case .unorderedList, .unorderedListIndentFirstOrder, .unorderedListIndentSecondOrder, .orderedList, .orderedListIndentFirstOrder, .orderedListIndentSecondOrder:
-            lineProperties = self.list
+        case .unorderedList, .unorderedListIndentFirstOrder, .unorderedListIndentSecondOrder,
+                .orderedList, .orderedListIndentFirstOrder, .orderedListIndentSecondOrder:
             finalTokens.insert(Token(type: .string, inputString: ""), at: 0)
-            
-        case .yaml:
-            lineProperties = body
-        case .previousH1:
-            lineProperties = body
-        case .previousH2:
-            lineProperties = body
-        case .body:
-            lineProperties = body
-        case .referencedLink:
-            lineProperties = body
-        case .breakParagraph:
-            lineProperties = breakParagraph
+        default:
+            break
         }
         
         for token in finalTokens {
@@ -948,200 +939,4 @@ extension SwiftyMarkdown {
     
         return finalAttributedString
     }
-    
-    func attributedStringNonPragraphStyleFor(tokens: [Token], in line: SwiftyLine) -> NSAttributedString {
-            
-            var finalTokens = tokens
-            let finalAttributedString = NSMutableAttributedString()
-            var attributes : [NSAttributedString.Key : AnyObject] = [:]
-        
-            guard let markdownLineStyle = line.lineStyle as? MarkdownLineStyle else {
-                preconditionFailure("The passed line style is not a valid Markdown Line Style")
-            }
-            
-            var listItem = self.bullet
-            switch markdownLineStyle {
-            case .orderedList:
-                listItem = self.bullet
-                self.orderedListCount += 1
-                self.orderedListIndentFirstOrderCount = 0
-                self.orderedListIndentSecondOrderCount = 0
-                listItem = "\(self.orderedListCount)."
-            case .orderedListIndentFirstOrder, .unorderedListIndentFirstOrder:
-                listItem = self.firstBullet
-                self.orderedListIndentFirstOrderCount += 1
-                self.orderedListIndentSecondOrderCount = 0
-                if markdownLineStyle == .orderedListIndentFirstOrder {
-                    let count = SwiftyMarkdown.firstIndexOrderList.count
-                    let temp = self.orderedListIndentFirstOrderCount % count
-                    let value = temp == 0 ? SwiftyMarkdown.firstIndexOrderList[count - 1] : SwiftyMarkdown.firstIndexOrderList[temp - 1]
-                    listItem = "\(value)."
-                }
-                
-            case .orderedListIndentSecondOrder, .unorderedListIndentSecondOrder:
-                listItem = self.secondBullet
-                self.orderedListIndentSecondOrderCount += 1
-                if markdownLineStyle == .orderedListIndentSecondOrder {
-                    let count = SwiftyMarkdown.secondIndexOrderList.count
-                    let temp = self.orderedListIndentSecondOrderCount % count
-                    let value = temp == 0 ? SwiftyMarkdown.secondIndexOrderList[count - 1] : SwiftyMarkdown.secondIndexOrderList[temp - 1]
-                    listItem = "\(value)."
-                }
-                
-            default:
-                if line.line == "" { break }
-                // should not reset orderedListCount if got an empty line
-                self.orderedListCount = 0
-                self.orderedListIndentFirstOrderCount = 0
-                self.orderedListIndentSecondOrderCount = 0
-            }
-
-            let lineProperties : LineProperties
-            switch markdownLineStyle {
-            case .h1:
-                lineProperties = self.h1
-            case .h2:
-                lineProperties = self.h2
-            case .h3:
-                lineProperties = self.h3
-            case .h4:
-                lineProperties = self.h4
-            case .h5:
-                lineProperties = self.h5
-            case .h6:
-                lineProperties = self.h6
-            case .codeblock:
-                lineProperties = self.code
-            case .blockquote:
-                lineProperties = self.blockquotes
-            case .unorderedList, .unorderedListIndentFirstOrder, .unorderedListIndentSecondOrder, .orderedList, .orderedListIndentFirstOrder, .orderedListIndentSecondOrder:
-                
-                let interval : CGFloat = self.list.tabWidth
-                var addition = interval
-                var indent = ""
-                
-                switch line.lineStyle as! MarkdownLineStyle {
-                case .unorderedList:
-                    indent = "\t"
-                    addition = interval * 2
-                case  .orderedList:
-                    indent = "\t"
-                    addition = interval * 2
-                case .unorderedListIndentFirstOrder, .orderedListIndentFirstOrder:
-                    addition = interval * 3
-                    indent = "\t\t"
-                case .unorderedListIndentSecondOrder, .orderedListIndentSecondOrder:
-                    addition = interval * 4
-                    indent = "\t\t\t"
-                default:
-                    break
-                }
-                
-                lineProperties = self.list
-                
-                finalTokens.insert(Token(type: .string, inputString: "\(indent)\(listItem)\t"), at: 0)
-            case .yaml:
-                lineProperties = body
-            case .previousH1:
-                lineProperties = body
-            case .previousH2:
-                lineProperties = body
-            case .body:
-                lineProperties = body
-            case .referencedLink:
-                lineProperties = body
-            case .breakParagraph:
-                lineProperties = breakParagraph
-            }
-            
-            let paragraphStyle = attributes[.paragraphStyle] as? NSMutableParagraphStyle ?? NSMutableParagraphStyle()
-            if lineProperties.alignment != .left {
-                paragraphStyle.alignment = lineProperties.alignment
-            }
-            paragraphStyle.lineSpacing = lineProperties.lineSpacing
-            if let lineHeightMultiple = lineProperties.lineHeightMultiple {
-                paragraphStyle.lineHeightMultiple = lineHeightMultiple
-            }
-            if let minimumLineHeight = lineProperties.minimumLineHeight {
-                paragraphStyle.minimumLineHeight = minimumLineHeight
-            }
-            if let maximumLineHeight = lineProperties.maximumLineHeight {
-                paragraphStyle.maximumLineHeight = maximumLineHeight
-            }
-            paragraphStyle.paragraphSpacing = lineProperties.paragraphSpacing
-            attributes[.paragraphStyle] = paragraphStyle
-            
-            
-            for token in finalTokens {
-                attributes[.font] = self.font(for: line)
-                attributes[.link] = nil
-                attributes[.strikethroughStyle] = nil
-                attributes[.foregroundColor] = self.color(for: line)
-                attributes[.underlineStyle] = nil
-                guard let styles = token.characterStyles as? [CharacterStyle] else {
-                    continue
-                }
-                if styles.contains(.strikethrough) {
-                    attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
-                    attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue as AnyObject
-                }
-                if styles.contains(.italic) {
-                    attributes[.font] = self.font(for: line, characterOverride: .italic)
-                }
-                if styles.contains(.bold) {
-                    attributes[.font] = self.font(for: line, characterOverride: .bold)
-                }
-                if (styles.contains(.italic) && styles.contains(.bold)) ||
-                    styles.contains(.boldItalic) {
-                    attributes[.font] = self.font(for: line, characterOverride: .boldItalic)
-                }
-                
-                if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
-                    attributes[.foregroundColor] = self.link.color
-                    attributes[.font] = self.font(for: line, characterOverride: .link)
-                    attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
-                    if let url = URL(string: token.metadataStrings[linkIdx]),
-                       let linkAttributeName = link.linkAttributeName {
-                        let key = NSAttributedString.Key(rawValue: linkAttributeName)
-                        attributes[key] = url as AnyObject
-                    }
-                    
-                    if underlineLinks {
-                        attributes[.underlineStyle] = self.link.underlineStyle.rawValue as AnyObject
-                        attributes[.underlineColor] = self.link.underlineColor
-                    }
-                }
-                
-                #if !os(watchOS)
-                if let imgIdx = styles.firstIndex(of: .image), imgIdx < token.metadataStrings.count {
-                    if !self.applyAttachments {
-                        continue
-                    }
-                    #if !os(macOS)
-                    let image1Attachment = NSTextAttachment()
-                    image1Attachment.image = UIImage(named: token.metadataStrings[imgIdx])
-                    let str = NSAttributedString(attachment: image1Attachment)
-                    finalAttributedString.append(str)
-                    #elseif !os(watchOS)
-                    let image1Attachment = NSTextAttachment()
-                    image1Attachment.image = NSImage(named: token.metadataStrings[imgIdx])
-                    let str = NSAttributedString(attachment: image1Attachment)
-                    finalAttributedString.append(str)
-                    #endif
-                    continue
-                }
-                #endif
-                
-                if styles.contains(.code) {
-                    attributes[.foregroundColor] = self.code.color
-                    attributes[.font] = self.font(for: line, characterOverride: .code)
-                } else {
-                    // Switch back to previous font
-                }
-                let str = NSAttributedString(string: token.outputString, attributes: attributes)
-                finalAttributedString.append(str)
-            }
-        
-            return finalAttributedString
-        }
 }
